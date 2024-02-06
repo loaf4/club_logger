@@ -3,19 +3,22 @@
 
 #include <string>
 
-enum class ClientStatus {Arrived = 1, Sitting, Waiting};
+enum class ClientStatus {ARRIVED = 1, SITTING, WAITING};
 
 class Client {
     std::string _name;
-    int _time_arrived;
+    int _table_id;
     ClientStatus _status;
 
 public:
-    Client(std::string name, int time_arrived) : _name{name}, 
-        _time_arrived{time_arrived},
-        _status{ClientStatus::Arrived} 
-    {}
-    void change_status(ClientStatus stat) { _status = stat; }
+    Client(std::string name);
+    void sitting(int table_id) { 
+        _status = ClientStatus::SITTING; 
+        _table_id = table_id;
+    }
+    void waiting() { _status = ClientStatus::WAITING; }
+    int get_table_id() { return _table_id; }
+    ClientStatus check_status() { return _status; }
 };
 
 #endif

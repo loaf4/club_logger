@@ -1,0 +1,7 @@
+#ifndef DAY_LOGGER_H
+#define DAY_LOGGER_H
+
+enum class EventIds {ARRIVED = 1, SITTING, WAITING, LEAVING, LEAVING_END = 11, SITTING_FROM_QUEUE, ERROR};
+
+#endif
+
