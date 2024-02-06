@@ -3,7 +3,11 @@
 
 #include <string>
 
-enum class ClientStatus {ARRIVED = 1, SITTING, WAITING};
+enum class ClientStatus {
+    ARRIVED = 1,
+    SITTING,
+    WAITING
+};
 
 class Client {
     std::string _name;

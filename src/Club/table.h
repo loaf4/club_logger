@@ -3,7 +3,10 @@
 
 #include "client.h"
 
-enum class TableStatus {OCCUPIED, FREE};
+enum class TableStatus {
+    OCCUPIED,
+    FREE
+};
 
 class Table {
     int _id;

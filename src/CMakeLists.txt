@@ -4,4 +4,6 @@ set(SRC
 add_executable(${PROJECT_NAME} ${SRC})
 
 add_subdirectory(Club)
+add_subdirectory(ClubLogger)
 target_link_libraries(${PROJECT_NAME} PRIVATE Club)
+target_link_libraries(${PROJECT_NAME} PRIVATE ClubLogger)
