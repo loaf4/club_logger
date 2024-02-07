@@ -21,8 +21,8 @@ public:
         _table_id = table_id;
     }
     void waiting() { _status = ClientStatus::WAITING; }
-    int get_table_id() { return _table_id; }
-    ClientStatus check_status() { return _status; }
+    int get_table_id() const { return _table_id; }
+    ClientStatus check_status() const { return _status; }
 };
 
 #endif

@@ -24,6 +24,7 @@ void DayLogger::generate_day_log(const std::string& filename) {
         std::cerr << "error: output file can't be opened";
     }
 
+    // read 1-3 lines from file (club config)
     std::vector<std::string> club_init_params;
     for (int i {0}; i < 3; ++i) {
         if (!fin.good()) {
@@ -41,46 +42,119 @@ void DayLogger::generate_day_log(const std::string& filename) {
             time_to_int(working_hours[1]),
             std::stoi(club_init_params[2]));
 
+    // starting working day
     if (!fout.good()) {
         std::cerr << "error: can't write output file anymore";
         return;
     }
     fout << working_hours[0] << std::endl;
     
+    // read and manipulate with event lines one by one
     std::vector<std::string> split_buffer;
-    while (!fin.eof() && !fin.good() && !fout.good()) {
+    while (!fin.eof() && fin.good() && fout.good()) {
         std::getline(fin, buffer);
+        fout << buffer << "\n";
         split_buffer = split_str(buffer);
 
         handle_input_event(fout, split_buffer, club);
     }
 
+    // ending working day
     if (!fout.good()) {
         std::cerr << "error: can't write output file anymore";
         return;
     }
     fout << working_hours[1] << std::endl;
 
+    // output in log file all information about all tables
+    fout << club.get_all_tables_info();
+
     fin.close();
     fout.close();
 }
 
 void DayLogger::handle_input_event(std::ostream& os, const std::vector<std::string>& event_line, Club& club) {
-
+    std::string response;
+    switch (std::stoi(event_line[1])) {
+        case 1:
+            response = handle_arriving(event_line, club);
+        case 2:
+            response = handle_sitting(event_line, club);
+        case 3:
+            response = handle_waiting(event_line, club);
+        case 4:
+            response = handle_leaving(event_line, club);
+    }
+    if (!response.empty()) {
+        os << response;
+    }
 }
 
 std::string DayLogger::handle_arriving(const std::vector<std::string>& event_line, Club& club) {
     std::string response;
+    uint32_t t = time_to_int(event_line[0]); 
 
+    if (club.is_client_in_club(event_line[2])) { 
+        response += generate_response(event_line[0], EventIds::ERROR, "YouShallNotPass");
+    } else if (club.get_time_opened > t && club.get_time_closed <= t) {
+        response += generate_response(event_line[0], EventIds::ERROR, "NotOpenYet");
+    } else {
+        club.client_arriving(event_line[2], t);
+    }
+
+    return response;
 }
 
-std::string DayLogger::handle_sitting(const std::vector<std::string>& event_line, Club& club) {}
+std::string DayLogger::handle_sitting(const std::vector<std::string>& event_line, Club& club) {
+    std::string response;
+    uint32_t t = time_to_int(event_line[0]); 
 
-std::string DayLogger::handle_waiting(const std::vector<std::string>& event_line, Club& club) {}
+    if (!club.is_client_in_club(event_line[2])) {
+        response += generate_response(event_line[0], EventIds::ERROR, "ClientUnknown");
+    } else if (club.is_table_occupied(std::stoi(event_line[3]))) { 
+        response += generate_response(event_line[0], EventIds::ERROR, "PlaceIsBusy");
+    } else {
+        club.client_sitting(event_line[2], t, std::stoi(event_line[3]));
+    }
 
-std::string DayLogger::handle_leaving(const std::vector<std::string>& event_line, Club& club) {}
+    return response;
+}
 
-std::string DayLogger::handle_error(const std::vector<std::string>& event_line, Club& club) {}
+std::string DayLogger::handle_waiting(const std::vector<std::string>& event_line, Club& club) { 
+    std::string response;
+
+    if (club.get_tables_total - club.get_tables_free > 0) {
+        response += generate_response(event_line[0], EventIds::ERROR, "ICanWaitNoLonger!");
+    } else if (club.get_count_clients_in_queue() > club.get_tables_total()) {
+        response += generate_response(event_line[0], EventIds::LEAVING_END, event_line[2]);
+    } else {
+        club.client_waiting(event_line[2]);
+    }
+
+    return response;
+}
+
+std::string DayLogger::handle_leaving(const std::vector<std::string>& event_line, Club& club) {
+    std::string response;
+    uint32_t t = time_to_int(event_line[0]); 
+
+    if (!club.is_client_in_club(event_line[2])) {
+        response += generate_response(event_line[0], EventIds::ERROR, "ClientUnknown");
+    } else {
+        if (club.is_client_sitting(event_line[2]) && club.get_count_clients_in_queue() > 0) { 
+            int table_id = club.get_table_id_by_client(event_line[2]);
+            std::string next_client {club.get_first_client_in_queue()};
+            response += generate_response(event_line[0], EventIds::SITTING_FROM_QUEUE, next_client + " " + std::to_string(table_id));
+        }
+        club.client_leaving(event_line[2], t);
+    }
+
+    return response;
+}
+
+std::string DayLogger::generate_response(const std::string& time, EventIds id, const std::string& mess) {
+    return time + " " + std::to_string(static_cast<int>(id)) + " " + mess + "\n";
+}
 
 std::vector<std::string> DayLogger::split_str(const std::string& str) {
     std::vector<std::string> res;

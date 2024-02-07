@@ -26,6 +26,6 @@ void Table::client_standing(int time, int money_per_hour) {
     _status = TableStatus::FREE;
 }
 
-std::string Table::current_info() {
+std::string Table::current_info() const {
     return std::to_string(_id) + " " + std::to_string(_money) + " " + time_to_str(_time_total);
 }

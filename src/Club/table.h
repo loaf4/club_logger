@@ -20,8 +20,9 @@ public:
     Table(int id);
     void client_sitting(std::string client, int time);
     void client_standing(int time, int money_per_hour);
-    std::string current_info();
-    TableStatus check_status() { return _status; }
+    std::string get_cur_client() const { return _cur_client; }
+    std::string current_info() const;
+    TableStatus check_status() const { return _status; }
 };
 
 #endif
