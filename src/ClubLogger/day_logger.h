@@ -19,11 +19,15 @@ enum class EventIds {
 
 class DayLogger {
     void handle_input_event(std::ostream& os, const std::vector<std::string>& event_line, Club& club);
+    void handle_end_of_working_day(std::ostream& os, Club& club);
+
     // possible events
     std::string handle_arriving(const std::vector<std::string>& event_line, Club& club);
     std::string handle_sitting(const std::vector<std::string>& event_line, Club& club);
     std::string handle_waiting(const std::vector<std::string>& event_line, Club& club);
     std::string handle_leaving(const std::vector<std::string>& event_line, Club& club);
+    std::string handle_leaving_end_of_day(const std::string& client, Club& club);
+
     std::string generate_response(const std::string& time, EventIds id, const std::string& mess = "");
     std::vector<std::string> split_str(const std::string& str);
 

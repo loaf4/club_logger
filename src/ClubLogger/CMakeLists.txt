@@ -3,3 +3,4 @@ add_library(ClubLogger STATIC
 
 target_include_directories(ClubLogger PUBLIC
     ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(ClubLogger PUBLIC Club)
