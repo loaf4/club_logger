@@ -5,8 +5,8 @@
 
 #include "club.h"
 
-Club::Club(int table_count, uint32_t time_opened, uint32_t time_closed, int money) : _time_opened{time_opened},
-    _time_closed{time_closed},
+Club::Club(int table_count, const std::string& time_opened, const std::string& time_closed, int money) : _time_opened{time_to_int(time_opened)},
+    _time_closed{time_to_int(time_closed)},
     _tables_total{table_count},
     _tables_free{table_count},
     _money_per_hour{money}
@@ -16,14 +16,14 @@ Club::Club(int table_count, uint32_t time_opened, uint32_t time_closed, int mone
     }
 }
 
-void Club::client_arriving(const std::string& name, const uint32_t time) {
-    if (is_client_in_club(name) || (get_time_opened() > time || get_time_closed() <= time)) {
+void Club::client_arriving(const std::string& name, const std::string& time) {
+    if (is_client_in_club(name) || !is_in_working_hours(time)) {
         return;
     }
     _clients_in_club.insert(std::make_pair(name, Client(name)));
 }
 
-void Club::client_sitting(const std::string& name, const uint32_t time, const int table_id) {
+void Club::client_sitting(const std::string& name, const std::string& time, const int table_id) {
     if (!is_client_in_club(name) || is_table_occupied(table_id)) { 
         return;
     }
@@ -33,20 +33,19 @@ void Club::client_sitting(const std::string& name, const uint32_t time, const in
     _tables[table_id - 1].client_sitting(name, time);
     _tables_free--;
     _clients_in_club.find(name)->second.sitting(table_id);
-    std::cout << name << " sitting at " << table_id << std::endl;
 }
 
-void Club::client_waiting(const std::string& name, const uint32_t time) {
+void Club::client_waiting(const std::string& name, const std::string& time) {
     if (get_tables_free() > 0) { return; }
     if (get_count_clients_in_queue() > get_tables_total()) {
         client_leaving(name, time);
+        return;
     }
     _clients_in_queue.push_back(name);
     _clients_in_club.find(name)->second.waiting();
-    std::cout << name << " waiting " << std::endl;
 }
 
-void Club::client_leaving(const std::string& name, const uint32_t time) {
+void Club::client_leaving(const std::string& name, const std::string& time) {
     if (!is_client_in_club(name)) {
         return;
     }
@@ -59,15 +58,13 @@ void Club::client_leaving(const std::string& name, const uint32_t time) {
         int table_id = cur_client.get_table_id(); 
         _tables[table_id - 1].client_standing(time, _money_per_hour);
         _tables_free++;
-        std::cout << name << " leaving " << table_id << std::endl;
 
         // next in queue sitting 
-        if (_clients_in_queue.size() > 0 && get_time_opened() <= time && get_time_closed() > time) {
+        if (get_count_clients_in_queue() > 0 && is_in_working_hours(time)) {
             client_sitting(_clients_in_queue.front(), time, table_id);
         }
     }
 
-    std::cout << name << " leaving " << std::endl;
     _clients_in_club.erase(name);
 }
 

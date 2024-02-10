@@ -18,8 +18,8 @@ class Table {
 
 public:
     Table(int id);
-    void client_sitting(std::string client, int time);
-    void client_standing(int time, int money_per_hour);
+    void client_sitting(const std::string& client, const std::string& time);
+    void client_standing(const std::string& time, int money_per_hour);
     std::string get_cur_client() const { return _cur_client; }
     std::string current_info() const;
     TableStatus check_status() const { return _status; }
