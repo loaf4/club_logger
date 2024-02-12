@@ -30,6 +30,7 @@ class DayLogger {
 
     std::string generate_response(const std::string& time, EventIds id, const std::string& mess = "");
     std::vector<std::string> split_str(const std::string& str);
+    bool is_valid_file(std::istream& is);
 
 public:
     void generate_day_log(const std::string& filename);

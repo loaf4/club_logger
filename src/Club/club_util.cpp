@@ -20,3 +20,13 @@ std::string time_to_str(const uint32_t time) {
     }
     return res;
 }
+
+bool is_earlier(const std::string& time_original, const std::string& time_tested) {
+    if (time_to_int(time_tested) < time_to_int(time_original)) { return true; }
+    return false;
+}
+
+bool is_later(const std::string& time_original, const std::string& time_tested) {
+    if (time_to_int(time_tested) > time_to_int(time_original)) { return true; }
+    return false;
+}

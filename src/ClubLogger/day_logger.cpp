@@ -5,8 +5,10 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <regex>
 
 #include "day_logger.h"
+#include "club_util.h"
 
 namespace fs = std::filesystem;
 
@@ -24,14 +26,13 @@ void DayLogger::generate_day_log(const std::string& filename) {
         std::cerr << "error: output file can't be opened" << std::endl;
     }
 
+    if (!is_valid_file(fin)) {
+        return;
+    }
+
     // read 1-3 lines from file (club config)
     std::vector<std::string> club_init_params;
     for (int i {0}; i < 3; ++i) {
-        if (!fin.good()) {
-            std::cerr << "error: can't read input file anymore" << std::endl;
-            return;
-        }
-
         std::getline(fin, buffer);
         club_init_params.push_back(buffer);
     }
@@ -43,10 +44,6 @@ void DayLogger::generate_day_log(const std::string& filename) {
             std::stoi(club_init_params[2]));
 
     // starting working day
-    if (!fout.good()) {
-        std::cerr << "error: can't write output file anymore" << std::endl;
-        return;
-    }
     fout << working_hours[0] << std::endl;
     
     // read and manipulate with event lines one by one
@@ -66,11 +63,6 @@ void DayLogger::generate_day_log(const std::string& filename) {
     }
 
     // ending working day
-    if (!fout.good()) {
-        std::cerr << "error: can't write output file anymore" << std::endl;
-        return;
-    }
-
     // last clients leaving the club
     if (!flag_end_of_day) {
         handle_end_of_working_day(fout, club);
@@ -198,4 +190,54 @@ std::vector<std::string> DayLogger::split_str(const std::string& str) {
     }
 
     return res;
+}
+
+bool DayLogger::is_valid_file(std::istream& is) {
+    std::string buffer;
+
+    // check number of tables
+    std::regex regex_tables("[0-9]+[ ]*");
+    std::getline(is, buffer);
+    if (!std::regex_match(buffer, regex_tables)) {
+        std::cout << buffer << std::endl;
+        return false;
+    }
+
+    // check time
+    std::regex regex_time("[0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}[ ]*");
+    std::getline(is, buffer);
+    if (!std::regex_match(buffer, regex_time)) {
+        std::cout << buffer << std::endl;
+        return false;
+    }
+
+    // check price
+    std::regex regex_price("[0-9]+[ ]*");
+    std::getline(is, buffer);
+    if (!std::regex_match(buffer, regex_price)) {
+        std::cout << buffer << std::endl;
+        return false;
+    }
+
+    // check events 1-4
+    std::regex regex_event("[0-9]{2}:[0-9]{2} [1-4] [a-z0-9_-]+[ ]?[0-9]*[ ]*");
+    std::string prev_time("00:00");
+    while (std::getline(is, buffer)) {
+        std::string cur_time;
+        std::stringstream ss(buffer);
+        ss >> cur_time;
+
+        // check if event isn't valid and if time is earlier than previous event time or later than 24:00
+        if (!std::regex_match(buffer, regex_event) || is_earlier(prev_time, cur_time) || is_later("23:59", cur_time)) {
+            std::cout << buffer << std::endl;
+            return false;
+        }
+        prev_time = cur_time;
+    }
+
+    // return to start of input file
+    is.clear();
+    is.seekg(0);
+
+    return true;
 }
